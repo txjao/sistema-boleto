@@ -309,22 +309,25 @@ export function useCatalogModel({
               ? ('overdue' as const)
               : ('open' as const),
       })) ?? [];
-  const relatedIds = new Set(relatedCompanies.map((company) => company.id));
-  const rootBills = (bills.data ?? []).filter((bill) => relatedIds.has(bill.companyId));
-  const openBills = rootBills.filter((bill) => bill.status === 'open');
+  const detailCompanies = selectedEstablishment
+    ? [selectedEstablishment]
+    : relatedCompanies;
+  const detailIds = new Set(detailCompanies.map((company) => company.id));
+  const detailBills = (bills.data ?? []).filter((bill) => detailIds.has(bill.companyId));
+  const openBills = detailBills.filter((bill) => bill.status === 'open');
   const overdueBills = openBills.filter((bill) => bill.dueDate < '2026-09-08');
-  const receivedInCompetence = rootBills
+  const receivedInCompetence = detailBills
     .filter((bill) => bill.status === 'paid' && bill.months.includes(competence))
     .reduce(
       (sum, bill) =>
         sum + Math.floor((bill.quote?.baseCents ?? bill.totalCents) / bill.months.length),
       0,
     );
-  const recentBills = [...rootBills]
+  const recentBills = [...detailBills]
     .sort((a, b) => b.dueDate.localeCompare(a.dueDate))
     .slice(0, 8)
     .map((bill) => {
-      const company = relatedCompanies.find((item) => item.id === bill.companyId);
+      const company = detailCompanies.find((item) => item.id === bill.companyId);
       const overdue = bill.status === 'open' && bill.dueDate < '2026-09-08';
       return {
         id: bill.id,
@@ -339,7 +342,10 @@ export function useCatalogModel({
     });
   const monitoringRows = selectedRoot
     ? (monitoring.data ?? []).filter(
-        (row) => cnpjRoot(row.company.cnpj) === cnpjRoot(selectedRoot.cnpj),
+        (row) =>
+          selectedEstablishment
+            ? row.company.id === selectedEstablishment.id
+            : cnpjRoot(row.company.cnpj) === cnpjRoot(selectedRoot.cnpj),
       )
     : [];
   const currentEstimates = monitoringRows

@@ -112,6 +112,25 @@
   border-radius: 12px;
   background: var(--background);
 }
+.entityData {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+.entityData > div {
+  width: 100%;
+}
+.entityData h2 {
+  margin-bottom: 18px;
+}
+.entityData .companyData {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.overviewDivider {
+  height: 1px;
+  margin: 28px 0;
+  background: var(--border);
+}
 .overviewHeading {
   display: flex;
   align-items: flex-start;
@@ -192,17 +211,6 @@
   padding-top: 16px;
   border-top: 1px solid var(--border);
   line-height: 1.6;
-}
-.companySummary {
-  display: flex;
-  gap: 18px;
-  padding: 24px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.companySummary > div {
-  width: 100%;
 }
 .companyData {
   display: grid;
@@ -379,6 +387,9 @@
   }
   .companyFields,
   .companyData {
+    grid-template-columns: 1fr;
+  }
+  .entityData .companyData {
     grid-template-columns: 1fr;
   }
   .overviewHeading {

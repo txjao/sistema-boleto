@@ -5,8 +5,86 @@ import { Button } from '@/shared/ui/components/button';
 import { Feedback, Loading } from '@/shared/ui/components/feedback';
 import { StatusTag } from '@/shared/ui/components/status-tag';
 import { maskCnpj, maskPhone } from '@/shared/ui/utils';
+import type { Company } from '@/server';
 import type { useCatalogModel } from './catalog.model';
 import styles from './styles/catalog.module.css';
+
+type FinancialOverview = {
+  competence: string;
+  received: string;
+  debt: string;
+  openCount: number;
+  overdueCount: number;
+  fines: string;
+  status: string;
+  statusKey: 'paid' | 'open' | 'overdue';
+};
+type Discrepancy = {
+  current: string;
+  previous: string;
+  reduction: string;
+  percentage: string;
+};
+
+function AuditOverview({
+  company,
+  overview,
+  discrepancy,
+  root,
+}: {
+  company: Company;
+  overview: FinancialOverview;
+  discrepancy: Discrepancy | null;
+  root: boolean;
+}) {
+  return (
+    <section className={styles.overview}>
+      <div className={styles.entityData}>
+        {!root && <BuildingsIcon size={24} />}
+        <div>
+          <h2>{root ? 'Dados do CNPJ raiz' : 'Dados do estabelecimento'}</h2>
+          <dl className={styles.companyData}>
+            <div><dt>Razão social</dt><dd>{company.name}</dd></div>
+            <div><dt>CNPJ</dt><dd>{company.cnpj}</dd></div>
+            <div><dt>Trabalhadores cadastrados</dt><dd>{company.workers.toLocaleString('pt-BR')}</dd></div>
+            <div><dt>Contato</dt><dd>{company.phone}<br />{company.email}</dd></div>
+            <div><dt>Endereço</dt><dd>{company.address}<br />{company.city}</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div className={styles.overviewDivider} />
+      <div className={styles.overviewHeading}>
+        <div>
+          <h2>{root ? 'Visão financeira consolidada' : 'Visão financeira do estabelecimento'}</h2>
+          <p>{root ? 'Matriz e filiais' : `Auditoria do CNPJ ${company.cnpj}`} na competência {overview.competence}.</p>
+        </div>
+        <StatusTag state={overview.statusKey}>{overview.status}</StatusTag>
+      </div>
+      {discrepancy && (
+        <div className={styles.discrepancyPanel}>
+          <WarningCircleIcon size={24} weight="fill" />
+          <div>
+            <strong>Discrepância na estimativa de trabalhadores</strong>
+            <p>A contribuição indica uma redução que precisa ser analisada, não uma irregularidade confirmada.</p>
+          </div>
+          <dl>
+            <div><dt>Estimativa atual</dt><dd>{discrepancy.current}</dd></div>
+            <div><dt>Último mês pago</dt><dd>{discrepancy.previous}</dd></div>
+            <div><dt>Redução estimada</dt><dd>{discrepancy.reduction} ({discrepancy.percentage})</dd></div>
+          </dl>
+        </div>
+      )}
+      <dl className={styles.detailMetrics}>
+        <div><dt>Recebido na competência</dt><dd>{overview.received}</dd></div>
+        <div><dt>Débito total em aberto</dt><dd>{overview.debt}</dd></div>
+        <div><dt>Boletos em aberto</dt><dd>{overview.openCount}</dd></div>
+        <div><dt>Boletos em atraso</dt><dd>{overview.overdueCount}</dd></div>
+        <div><dt>Multas registradas</dt><dd>{overview.fines}</dd></div>
+      </dl>
+      <p className={styles.overviewNote}>Os valores consideram apenas as cobranças visíveis para o perfil selecionado. Multas aparecem quando fazem parte da memória de cálculo do boleto.</p>
+    </section>
+  );
+}
 export function CatalogView(props: ReturnType<typeof useCatalogModel>) {
   const {
     kind,
@@ -191,70 +269,8 @@ export function CatalogView(props: ReturnType<typeof useCatalogModel>) {
       {selectedRoot && !isEstablishmentDetail && (
         <div className={styles.details}>
           {companyOverview && (
-            <section className={styles.overview}>
-              <div className={styles.overviewHeading}>
-                <div>
-                  <h2>Visão financeira consolidada</h2>
-                  <p>Matriz e filiais na competência {companyOverview.competence}.</p>
-                </div>
-                <StatusTag state={companyOverview.statusKey}>{companyOverview.status}</StatusTag>
-              </div>
-              {companyDiscrepancy && (
-                <div className={styles.discrepancyPanel}>
-                  <WarningCircleIcon size={24} weight="fill" />
-                  <div>
-                    <strong>Discrepância na estimativa de trabalhadores</strong>
-                    <p>A contribuição indica uma redução que precisa ser analisada, não uma irregularidade confirmada.</p>
-                  </div>
-                  <dl>
-                    <div><dt>Estimativa atual</dt><dd>{companyDiscrepancy.current}</dd></div>
-                    <div><dt>Último mês pago</dt><dd>{companyDiscrepancy.previous}</dd></div>
-                    <div><dt>Redução estimada</dt><dd>{companyDiscrepancy.reduction} ({companyDiscrepancy.percentage})</dd></div>
-                  </dl>
-                </div>
-              )}
-              <dl className={styles.detailMetrics}>
-                <div><dt>Recebido na competência</dt><dd>{companyOverview.received}</dd></div>
-                <div><dt>Débito total em aberto</dt><dd>{companyOverview.debt}</dd></div>
-                <div><dt>Boletos em aberto</dt><dd>{companyOverview.openCount}</dd></div>
-                <div><dt>Boletos em atraso</dt><dd>{companyOverview.overdueCount}</dd></div>
-                <div><dt>Multas registradas</dt><dd>{companyOverview.fines}</dd></div>
-              </dl>
-              <p className={styles.overviewNote}>Os valores consideram apenas as cobranças visíveis para o perfil selecionado. Multas aparecem quando fazem parte da memória de cálculo do boleto.</p>
-            </section>
+            <AuditOverview company={selectedRoot} overview={companyOverview} discrepancy={companyDiscrepancy} root />
           )}
-          <section>
-            <div className={styles.sectionHeading}>
-              <div><h2>Cobranças recentes</h2><p>Últimos boletos da matriz e das filiais.</p></div>
-              <Button asChild variant="ghost"><Link to="/boletos">Ver todos os boletos</Link></Button>
-            </div>
-            <div className={styles.tableWrap}>
-              <table>
-                <thead><tr><th>Estabelecimento</th><th>Competência</th><th>Vencimento</th><th>Valor</th><th>Situação</th></tr></thead>
-                <tbody>
-                  {recentBills.map((bill) => (
-                    <tr key={bill.id}>
-                      <td><strong>{bill.company}</strong><small>{bill.cnpj}</small></td>
-                      <td>{bill.months}</td><td>{bill.due}</td><td>{bill.amount}</td>
-                      <td><StatusTag state={bill.statusKey}>{bill.status}</StatusTag></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {recentBills.length === 0 && <p className={styles.empty}>Ainda não há cobranças visíveis para esta empresa.</p>}
-            </div>
-          </section>
-          <section className={styles.companySummary}>
-            <div>
-              <h2>Dados do CNPJ raiz</h2>
-              <dl className={styles.companyData}>
-                <div><dt>Razão social</dt><dd>{selectedRoot.name}</dd></div>
-                <div><dt>CNPJ da matriz</dt><dd>{selectedRoot.cnpj}</dd></div>
-                <div><dt>Contato</dt><dd>{selectedRoot.phone}<br />{selectedRoot.email}</dd></div>
-                <div><dt>Endereço</dt><dd>{selectedRoot.address}<br />{selectedRoot.city}</dd></div>
-              </dl>
-            </div>
-          </section>
           <section>
             <div className={styles.sectionHeading}>
               <div><h2>CNPJs vinculados <span>{relatedCompanies.length}</span></h2><p>Selecione um estabelecimento para consultar seus dados e cobranças.</p></div>
@@ -276,21 +292,37 @@ export function CatalogView(props: ReturnType<typeof useCatalogModel>) {
               </table>
             </div>
           </section>
+          <section>
+            <div className={styles.sectionHeading}>
+              <div><h2>Cobranças recentes</h2><p>Últimos boletos da matriz e das filiais.</p></div>
+              <Button asChild variant="ghost"><Link to="/boletos">Ver todos os boletos</Link></Button>
+            </div>
+            <div className={styles.tableWrap}>
+              <table>
+                <thead><tr><th>Estabelecimento</th><th>Competência</th><th>Vencimento</th><th>Valor</th><th>Situação</th></tr></thead>
+                <tbody>
+                  {recentBills.map((bill) => (
+                    <tr key={bill.id}>
+                      <td><strong>{bill.company}</strong><small>{bill.cnpj}</small></td>
+                      <td>{bill.months}</td><td>{bill.due}</td><td>{bill.amount}</td>
+                      <td><StatusTag state={bill.statusKey}>{bill.status}</StatusTag></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {recentBills.length === 0 && <p className={styles.empty}>Ainda não há cobranças visíveis para esta empresa.</p>}
+            </div>
+          </section>
         </div>
       )}
       {selectedEstablishment && (
         <div className={styles.details}>
-          <section className={styles.companySummary}>
-            <BuildingsIcon size={24} />
-            <dl className={styles.companyData}>
-              <div><dt>CNPJ</dt><dd>{selectedEstablishment.cnpj}</dd></div>
-              <div><dt>Trabalhadores</dt><dd>{selectedEstablishment.workers.toLocaleString('pt-BR')}</dd></div>
-              <div><dt>Contato</dt><dd>{selectedEstablishment.phone}<br />{selectedEstablishment.email}</dd></div>
-              <div><dt>Endereço</dt><dd>{selectedEstablishment.address}<br />{selectedEstablishment.city}</dd></div>
-            </dl>
-          </section>
+          {companyOverview && <AuditOverview company={selectedEstablishment} overview={companyOverview} discrepancy={companyDiscrepancy} root={false} />}
           <section>
-            <h2>Histórico de cobranças</h2>
+            <div className={styles.sectionHeading}>
+              <div><h2>Histórico de cobranças</h2><p>Boletos emitidos exclusivamente para este CNPJ.</p></div>
+              <Button asChild variant="ghost"><Link to={`/boletos?empresa=${selectedEstablishment.id}`}>Ver todos os boletos</Link></Button>
+            </div>
             {historyError && (
               <Feedback error message={historyError} retry={refreshHistory} />
             )}
