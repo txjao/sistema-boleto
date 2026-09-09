@@ -1,0 +1,109 @@
+.launcher {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 100;
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 4px 15px #023a5126;
+  cursor: pointer;
+}
+.panel {
+  z-index: 101;
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(690px, calc(100dvh - 100px));
+  overflow-y: auto;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.header p,
+.hint {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.hint {
+  margin-top: 12px;
+}
+.fields {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.fields label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.fields select {
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 10px;
+  width: 100%;
+}
+.armed {
+  margin-top: 14px;
+  padding: 10px;
+  background: var(--muted);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.logs {
+  display: grid;
+  gap: 12px;
+}
+.logs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.logs small {
+  display: block;
+  color: var(--muted-foreground);
+}
+.logs [data-state='error'] {
+  color: var(--danger);
+}
+.logs [data-state='success'] {
+  color: var(--success);
+}
+.reset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+.reset h3 {
+  font-size: 13px;
+  font-weight: 700;
+}
+.reset p {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  margin-top: 3px;
+}
