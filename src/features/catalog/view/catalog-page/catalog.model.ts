@@ -340,33 +340,53 @@ export function useCatalogModel({
         statusKey: bill.status === 'paid' ? ('paid' as const) : overdue ? ('overdue' as const) : ('open' as const),
       };
     });
-  const monitoringRows = selectedRoot
+  const rootMonitoringRows = selectedRoot
     ? (monitoring.data ?? []).filter(
-        (row) =>
-          selectedEstablishment
-            ? row.company.id === selectedEstablishment.id
-            : cnpjRoot(row.company.cnpj) === cnpjRoot(selectedRoot.cnpj),
+        (row) => cnpjRoot(row.company.cnpj) === cnpjRoot(selectedRoot.cnpj),
       )
     : [];
-  const currentEstimates = monitoringRows
-    .map((row) => row.estimatedWorkers)
-    .filter((value): value is number => value !== null);
-  const previousEstimates = monitoringRows
-    .map((row) => row.previousWorkers)
-    .filter((value): value is number => value !== null);
-  const currentWorkers = currentEstimates.reduce((sum, value) => sum + value, 0);
-  const previousWorkers = previousEstimates.reduce((sum, value) => sum + value, 0);
-  const companyDiscrepancy = monitoringRows.some((row) => row.discrepancy)
+  const detailMonitoringRows = selectedEstablishment
+    ? rootMonitoringRows.filter((row) => row.company.id === selectedEstablishment.id)
+    : rootMonitoringRows;
+  function discrepancyFrom(rows: typeof rootMonitoringRows) {
+    if (!rows.some((row) => row.discrepancy)) return null;
+    const currentWorkers = rows.reduce(
+      (sum, row) => sum + (row.estimatedWorkers ?? 0),
+      0,
+    );
+    const previousWorkers = rows.reduce(
+      (sum, row) => sum + (row.previousWorkers ?? 0),
+      0,
+    );
+    return {
+      current: currentWorkers.toLocaleString('pt-BR'),
+      previous: previousWorkers.toLocaleString('pt-BR'),
+      reduction: Math.max(0, previousWorkers - currentWorkers).toLocaleString('pt-BR'),
+      percentage:
+        previousWorkers > 0
+          ? `${Math.round(((previousWorkers - currentWorkers) / previousWorkers) * 100)}%`
+          : '—',
+    };
+  }
+  const detailDiscrepancy = discrepancyFrom(detailMonitoringRows);
+  const rootDiscrepancy = discrepancyFrom(rootMonitoringRows);
+  const companyDiscrepancy = detailDiscrepancy
     ? {
-        current: currentWorkers.toLocaleString('pt-BR'),
-        previous: previousWorkers.toLocaleString('pt-BR'),
-        reduction: Math.max(0, previousWorkers - currentWorkers).toLocaleString('pt-BR'),
-        percentage:
-          previousWorkers > 0
-            ? `${Math.round(((previousWorkers - currentWorkers) / previousWorkers) * 100)}%`
-            : '—',
+        ...detailDiscrepancy,
+        title: selectedEstablishment
+          ? 'Discrepância neste estabelecimento'
+          : 'Discrepância na estimativa de trabalhadores',
+        description:
+          'A contribuição indica uma redução que precisa ser analisada, não uma irregularidade confirmada.',
       }
-    : null;
+    : selectedEstablishment && rootDiscrepancy
+      ? {
+          ...rootDiscrepancy,
+          title: 'Discrepância no grupo do CNPJ raiz',
+          description:
+            'Há redução estimada em um ou mais CNPJs vinculados. Consulte os estabelecimentos para localizar a origem.',
+        }
+      : null;
   const companyOverview = selectedRoot
     ? {
         competence: monthLabel(competence),

@@ -401,6 +401,7 @@
   }
   .discrepancyPanel dl {
     grid-column: 1 / -1;
+    grid-template-columns: 1fr;
   }
   .detailMetrics {
     grid-template-columns: 1fr 1fr;
@@ -432,8 +433,5 @@
   .detailMetrics > div {
     padding: 0;
     border-left: 0;
-  }
-  .discrepancyPanel dl {
-    grid-template-columns: 1fr;
   }
 }

@@ -20,6 +20,8 @@ type FinancialOverview = {
   statusKey: 'paid' | 'open' | 'overdue';
 };
 type Discrepancy = {
+  title: string;
+  description: string;
   current: string;
   previous: string;
   reduction: string;
@@ -64,8 +66,8 @@ function AuditOverview({
         <div className={styles.discrepancyPanel}>
           <WarningCircleIcon size={24} weight="fill" />
           <div>
-            <strong>Discrepância na estimativa de trabalhadores</strong>
-            <p>A contribuição indica uma redução que precisa ser analisada, não uma irregularidade confirmada.</p>
+            <strong>{discrepancy.title}</strong>
+            <p>{discrepancy.description}</p>
           </div>
           <dl>
             <div><dt>Estimativa atual</dt><dd>{discrepancy.current}</dd></div>
